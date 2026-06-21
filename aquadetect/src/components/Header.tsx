@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Droplets, Zap } from 'lucide-react';
+import { Zap } from 'lucide-react';
 
 export default function Header() {
   return (
@@ -15,11 +15,15 @@ export default function Header() {
           <div className="flex items-center gap-3">
             <motion.div
               className="relative"
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ scale: 1.08 }}
               whileTap={{ scale: 0.95 }}
             >
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center glow-blue">
-                <Droplets className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl overflow-hidden glow-blue border border-white/10 shadow-lg shadow-blue-500/20">
+                <img
+                  src="/aqua-logo.jpg"
+                  alt="AquaDetect Logo"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <motion.div
                 className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full"
