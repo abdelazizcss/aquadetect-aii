@@ -14,7 +14,7 @@ export default function GaugeChart({ value, maxValue, label, status, color, unit
   const [isAnimating, setIsAnimating] = useState(true);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animatedValue = useSpring(0, { stiffness: 40, damping: 15 });
-  const displayValue = useTransform(animatedValue, (v) => Math.round(v));
+  const displayValue = useTransform(animatedValue, (v) => Math.round((v / 100) * maxValue));
 
   const percentage = Math.min((value / maxValue) * 100, 100);
 
@@ -24,7 +24,7 @@ export default function GaugeChart({ value, maxValue, label, status, color, unit
       setIsAnimating(false);
     }, 300);
     return () => clearTimeout(timeout);
-  }, [percentage, animatedValue]);
+  }, [percentage, animatedValue, maxValue]);
 
   // Draw gauge on canvas for crisp rendering
   useEffect(() => {
@@ -64,13 +64,12 @@ export default function GaugeChart({ value, maxValue, label, status, color, unit
       ctx.lineCap = 'round';
       ctx.stroke();
 
-      // Colored segments on background
+      // Colored segments on background (0-150 Safe, 150-450 Attention, 450-750 High, >750 Critical)
       const segments = [
-        { start: 0, end: 0.06, color: '#003399' },
-        { start: 0.06, end: 0.19, color: '#4A90E2' },
-        { start: 0.19, end: 0.56, color: '#7B1FA2' },
-        { start: 0.56, end: 0.94, color: '#C2185B' },
-        { start: 0.94, end: 1, color: '#E91E63' },
+        { start: 0, end: 0.15, color: '#4A90E2' },
+        { start: 0.15, end: 0.45, color: '#7B1FA2' },
+        { start: 0.45, end: 0.75, color: '#C2185B' },
+        { start: 0.75, end: 1, color: '#E91E63' },
       ];
 
       segments.forEach(seg => {

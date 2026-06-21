@@ -110,7 +110,7 @@ export default function ResultDashboard({ result }: ResultDashboardProps) {
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold"
               style={{ backgroundColor: statusBg, color: statusColor, border: `1px solid ${statusColor}40` }}
             >
-              {result.status === 'Excellent' || result.status === 'Safe' ? (
+              {result.status === 'Safe' ? (
                 <CheckCircle className="w-4 h-4" />
               ) : (
                 <AlertTriangle className="w-4 h-4" />

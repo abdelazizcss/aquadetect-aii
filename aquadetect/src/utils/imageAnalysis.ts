@@ -1,5 +1,5 @@
 import { CALIBRATION_DATA } from './calibrationData';
-import { rgbToCielab, deltaE76, calculateConfidence, getAverageColor } from './colorScience';
+import { rgbToCielab, deltaE2000, calculateConfidence, getAverageColor } from './colorScience';
 import type { AnalysisResult, CalibrationEntry } from '../types';
 
 /**
@@ -34,28 +34,29 @@ export function analyzeImage(
   let bestMatch: CalibrationEntry = CALIBRATION_DATA[0];
   let bestDeltaE = Infinity;
 
+  // Use deltaE2000 for more accurate color matching
   for (const entry of CALIBRATION_DATA) {
     const entryLab = rgbToCielab(...entry.rgb);
-    const dE = deltaE76(cielab, entryLab);
+    const dE = deltaE2000(cielab, entryLab);
     if (dE < bestDeltaE) {
       bestDeltaE = dE;
       bestMatch = entry;
     }
   }
 
-  // Estimate PPM based on color interpolation
-  const estimatedPpm = interpolatePpm(r, g, b);
+  // Use PPM center from best match with interpolation between closest two points
+  const estimatedPpm = interpolatePpmFromMatch(cielab, bestMatch, bestDeltaE);
 
   // Calculate confidence
   const confidence = calculateConfidence(bestDeltaE);
 
-  // Determine risk level
-  const riskLevel = getRiskLevel(bestMatch.status);
+  // Determine status and risk level based on actual PPM value
+  const { status, riskLevel, colorName } = getStatusFromPpm(estimatedPpm);
 
   return {
     waterContent: Math.round(estimatedPpm),
-    status: bestMatch.status,
-    detectedColor: bestMatch.name,
+    status,
+    detectedColor: colorName,
     confidence: Math.min(confidence, 99.9),
     riskLevel,
     rgb: [r, g, b],
@@ -67,41 +68,55 @@ export function analyzeImage(
 }
 
 /**
- * Interpolate PPM value based on RGB color
+ * Get status and risk level from PPM value
  */
-function interpolatePpm(r: number, g: number, b: number): number {
-  const lab = rgbToCielab(r, g, b);
-
-  // Weighted interpolation based on CIELAB distance to each calibration point
-  let weightedSum = 0;
-  let totalWeight = 0;
-
-  for (const entry of CALIBRATION_DATA) {
-    const entryLab = rgbToCielab(...entry.rgb);
-    const dE = deltaE76(lab, entryLab);
-    const weight = 1 / (dE + 1); // Inverse distance weighting
-    weightedSum += entry.ppmCenter * weight;
-    totalWeight += weight;
+function getStatusFromPpm(ppm: number): { status: string; riskLevel: string; colorName: string } {
+  if (ppm <= 150) {
+    return { status: 'Safe', riskLevel: 'Low', colorName: 'Bleu Cyan Clair' };
+  } else if (ppm <= 450) {
+    return { status: 'Attention', riskLevel: 'Moderate', colorName: 'Indigo / Violet Franc' };
+  } else if (ppm <= 750) {
+    return { status: 'High Contamination', riskLevel: 'High', colorName: 'Pourpre / Rose-Violet' };
+  } else {
+    return { status: 'Critical', riskLevel: 'Critical', colorName: 'Rose Vif / Fuchsia Total' };
   }
-
-  const estimatedPpm = weightedSum / totalWeight;
-
-  // Clamp to reasonable range
-  return Math.max(0, Math.min(1000, estimatedPpm));
 }
 
 /**
- * Determine risk level from status
+ * Interpolate PPM based on best match and neighboring points
  */
-function getRiskLevel(status: string): string {
-  switch (status) {
-    case 'Excellent': return 'Very Low';
-    case 'Safe': return 'Low';
-    case 'Attention': return 'Moderate';
-    case 'High Contamination': return 'High';
-    case 'Critical': return 'Critical';
-    default: return 'Unknown';
+function interpolatePpmFromMatch(
+  lab: { L: number; a: number; b: number },
+  bestMatch: CalibrationEntry,
+  bestDeltaE: number
+): number {
+  // Find the second closest entry for interpolation
+  let secondBest: CalibrationEntry | null = null;
+  let secondBestDeltaE = Infinity;
+
+  for (const entry of CALIBRATION_DATA) {
+    if (entry === bestMatch) continue;
+    const entryLab = rgbToCielab(...entry.rgb);
+    const dE = deltaE2000(lab, entryLab);
+    if (dE < secondBestDeltaE) {
+      secondBestDeltaE = dE;
+      secondBest = entry;
+    }
   }
+
+  // If best match is very close (deltaE < 5), use its ppmCenter directly
+  if (bestDeltaE < 5 || !secondBest) {
+    return bestMatch.ppmCenter;
+  }
+
+  // Otherwise interpolate between the two closest points
+  const totalDeltaE = bestDeltaE + secondBestDeltaE;
+  const weight = 1 - (bestDeltaE / totalDeltaE);
+
+  const estimatedPpm = bestMatch.ppmCenter * weight + secondBest.ppmCenter * (1 - weight);
+
+  // Clamp to reasonable range
+  return Math.max(0, Math.min(1000, estimatedPpm));
 }
 
 /**

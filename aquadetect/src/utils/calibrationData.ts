@@ -2,22 +2,13 @@ import type { CalibrationEntry } from '../types';
 
 export const CALIBRATION_DATA: CalibrationEntry[] = [
   {
-    range: '<50 ppm',
-    name: 'Bleu Pur Intense',
-    hex: '#003399',
-    rgb: [0, 51, 153],
-    status: 'Excellent',
-    description: 'Pure fuel, no significant water contamination',
-    ppmCenter: 25,
-  },
-  {
-    range: '50-150 ppm',
+    range: '>150 ppm',
     name: 'Bleu Cyan Clair',
     hex: '#4A90E2',
     rgb: [74, 144, 226],
     status: 'Safe',
     description: 'Acceptable water level',
-    ppmCenter: 100,
+    ppmCenter: 75,
   },
   {
     range: '150-450 ppm',
@@ -38,7 +29,7 @@ export const CALIBRATION_DATA: CalibrationEntry[] = [
     ppmCenter: 600,
   },
   {
-    range: '>750 ppm',
+    range: '750>',
     name: 'Rose Vif / Fuchsia Total',
     hex: '#E91E63',
     rgb: [233, 30, 99],
@@ -50,7 +41,6 @@ export const CALIBRATION_DATA: CalibrationEntry[] = [
 
 export const getStatusColor = (status: string): string => {
   switch (status) {
-    case 'Excellent': return '#003399';
     case 'Safe': return '#4A90E2';
     case 'Attention': return '#7B1FA2';
     case 'High Contamination': return '#C2185B';
@@ -61,7 +51,6 @@ export const getStatusColor = (status: string): string => {
 
 export const getStatusBgColor = (status: string): string => {
   switch (status) {
-    case 'Excellent': return 'rgba(0, 51, 153, 0.15)';
     case 'Safe': return 'rgba(74, 144, 226, 0.15)';
     case 'Attention': return 'rgba(123, 31, 162, 0.15)';
     case 'High Contamination': return 'rgba(194, 24, 91, 0.15)';
@@ -72,7 +61,6 @@ export const getStatusBgColor = (status: string): string => {
 
 export const getStatusGlow = (status: string): string => {
   switch (status) {
-    case 'Excellent': return '0 0 20px rgba(0, 51, 153, 0.4)';
     case 'Safe': return '0 0 20px rgba(74, 144, 226, 0.4)';
     case 'Attention': return '0 0 20px rgba(123, 31, 162, 0.4)';
     case 'High Contamination': return '0 0 20px rgba(194, 24, 91, 0.4)';
