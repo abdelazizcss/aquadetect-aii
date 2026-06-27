@@ -2,14 +2,17 @@ import { useCallback, useRef, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, Camera, RotateCcw, ZoomIn, Maximize2, Target } from 'lucide-react';
-import { analyzeImage, drawAnalysisOverlay } from '../utils/imageAnalysis';
+import { analyzeImage, drawAnalysisOverlay, detectStripRegion } from '../utils/imageAnalysis';
 import type { ImageAnalysisState, AnalysisResult } from '../types';
+
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
 interface ImageUploaderProps {
   onAnalysisComplete: (result: AnalysisResult, images: ImageAnalysisState) => void;
+  onAnalysisStart?: () => void;
 }
 
-export default function ImageUploader({ onAnalysisComplete }: ImageUploaderProps) {
+export default function ImageUploader({ onAnalysisComplete, onAnalysisStart }: ImageUploaderProps) {
   const [state, setState] = useState<ImageAnalysisState>({
     originalImage: null,
     detectedStrip: null,
@@ -26,7 +29,9 @@ export default function ImageUploader({ onAnalysisComplete }: ImageUploaderProps
     const reader = new FileReader();
     reader.onload = async (e) => {
       const imageUrl = e.target?.result as string;
-      setState(prev => ({ ...prev, originalImage: imageUrl, isAnalyzing: true }));
+      setState(prev => ({ ...prev, originalImage: imageUrl }));
+      onAnalysisStart?.();
+      setState(prev => ({ ...prev, isAnalyzing: true }));
 
       const img = new Image();
       img.onload = async () => {
@@ -43,37 +48,64 @@ export default function ImageUploader({ onAnalysisComplete }: ImageUploaderProps
 
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
+        // Detect the precise strip region first
+        const stripRegion = detectStripRegion(canvas, ctx);
+
         // Simulate analysis delay
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         // Analyze
         const result = analyzeImage(canvas, ctx, canvas.width, canvas.height);
 
-        // Draw overlay
-        drawAnalysisOverlay(canvas, ctx);
+        // Draw overlay highlighting only the strip
+        drawAnalysisOverlay(canvas, ctx, stripRegion);
 
-        // Generate sub-images
+        // Generate sub-images using detected strip region
         const stripCanvas = document.createElement('canvas');
         const stripCtx = stripCanvas.getContext('2d')!;
-        const centerX = Math.floor(canvas.width * 0.3);
-        const centerY = Math.floor(canvas.height * 0.2);
-        const sampleWidth = Math.floor(canvas.width * 0.4);
-        const sampleHeight = Math.floor(canvas.height * 0.6);
-        stripCanvas.width = sampleWidth;
-        stripCanvas.height = sampleHeight;
-        stripCtx.drawImage(canvas, centerX, centerY, sampleWidth, sampleHeight, 0, 0, sampleWidth, sampleHeight);
+        stripCanvas.width = stripRegion.width;
+        stripCanvas.height = stripRegion.height;
+        stripCtx.drawImage(
+          canvas,
+          stripRegion.x, stripRegion.y, stripRegion.width, stripRegion.height,
+          0, 0, stripRegion.width, stripRegion.height
+        );
 
-        // Zoomed region
+        // Remove background - keep only the strip
+        const imageData = stripCtx.getImageData(0, 0, stripCanvas.width, stripCanvas.height);
+        const stripData = imageData.data;
+        
+        for (let i = 0; i < stripData.length; i += 4) {
+          const r = stripData[i];
+          const g = stripData[i + 1];
+          const b = stripData[i + 2];
+          
+          const brightness = (r + g + b) / 3;
+          const max = Math.max(r, g, b);
+          const min = Math.min(r, g, b);
+          const saturation = max === 0 ? 0 : ((max - min) / max);
+          
+          // Make white/light background transparent
+          if (brightness > 200 && saturation < 0.1) {
+            stripData[i + 3] = 0; // Alpha = 0 (transparent)
+          }
+        }
+        
+        stripCtx.putImageData(imageData, 0, 0);
+
+        // Zoomed region - center of the detected strip
         const zoomCanvas = document.createElement('canvas');
         const zoomCtx = zoomCanvas.getContext('2d')!;
         zoomCanvas.width = 200;
         zoomCanvas.height = 200;
+        const zoomW = stripRegion.width * 0.5;
+        const zoomH = stripRegion.height * 0.8;
         zoomCtx.drawImage(
           canvas,
-          centerX + sampleWidth * 0.25,
-          centerY + sampleHeight * 0.25,
-          sampleWidth * 0.5,
-          sampleHeight * 0.5,
+          stripRegion.x + stripRegion.width * 0.25,
+          stripRegion.y + stripRegion.height * 0.1,
+          zoomW,
+          zoomH,
           0, 0, 200, 200
         );
 
@@ -99,6 +131,21 @@ export default function ImageUploader({ onAnalysisComplete }: ImageUploaderProps
     reader.readAsDataURL(file);
   }, [onAnalysisComplete]);
 
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCameraCapture = useCallback(() => {
+    cameraInputRef.current?.click();
+  }, []);
+
+  const onCameraChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processImage(file);
+      // Reset input so same file can be selected again
+      e.target.value = '';
+    }
+  }, [processImage]);
+
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
       processImage(acceptedFiles[0]);
@@ -111,7 +158,10 @@ export default function ImageUploader({ onAnalysisComplete }: ImageUploaderProps
     maxFiles: 1,
   });
 
+  const showCameraButton = isMobile && 'mediaDevices' in navigator;
+
   const handleReset = () => {
+    onAnalysisStart?.();
     setState({
       originalImage: null,
       detectedStrip: null,
@@ -170,6 +220,26 @@ export default function ImageUploader({ onAnalysisComplete }: ImageUploaderProps
                   </p>
                 </div>
               </motion.div>
+
+              {showCameraButton && (
+                <button
+                  onClick={handleCameraCapture}
+                  type="button"
+                  className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-medium transition-colors"
+                >
+                  <Camera className="w-5 h-5" />
+                  Take Photo
+                </button>
+              )}
+
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={onCameraChange}
+                className="hidden"
+              />
             </div>
           </motion.div>
         ) : state.isAnalyzing ? (
@@ -208,40 +278,40 @@ export default function ImageUploader({ onAnalysisComplete }: ImageUploaderProps
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="relative group">
-                <div className="aspect-square rounded-xl overflow-hidden bg-slate-800/50 border border-slate-700/50">
-                  <img src={state.originalImage!} alt="Original" className="w-full h-full object-cover" />
+                <div className="aspect-[4/3] rounded-xl overflow-hidden bg-slate-800/50 border border-slate-700/50">
+                  <img src={state.originalImage!} alt="Original" className="w-full h-full object-contain" />
                 </div>
-                <div className="absolute top-2 left-2 px-2 py-0.5 bg-black/60 rounded text-[10px] text-white font-medium">
+                <div className="absolute top-2 left-2 px-3 py-1 bg-black/60 rounded text-xs text-white font-medium">
                   Original Image
                 </div>
               </div>
 
               <div className="relative group">
-                <div className="aspect-square rounded-xl overflow-hidden bg-slate-800/50 border border-slate-700/50">
-                  <img src={state.detectedStrip!} alt="Detected Strip" className="w-full h-full object-cover" />
+                <div className="aspect-[4/3] rounded-xl overflow-hidden bg-slate-800/50 border border-slate-700/50">
+                  <img src={state.detectedStrip!} alt="Detected Strip" className="w-full h-full object-contain" />
                 </div>
-                <div className="absolute top-2 left-2 px-2 py-0.5 bg-black/60 rounded text-[10px] text-white font-medium flex items-center gap-1">
-                  <Maximize2 className="w-2.5 h-2.5" /> Detected Strip
-                </div>
-              </div>
-
-              <div className="relative group">
-                <div className="aspect-square rounded-xl overflow-hidden bg-slate-800/50 border border-slate-700/50">
-                  <img src={state.analyzedArea!} alt="Analyzed Area" className="w-full h-full object-cover" />
-                </div>
-                <div className="absolute top-2 left-2 px-2 py-0.5 bg-black/60 rounded text-[10px] text-white font-medium flex items-center gap-1">
-                  <Target className="w-2.5 h-2.5" /> Analyzed Area
+                <div className="absolute top-2 left-2 px-3 py-1 bg-black/60 rounded text-xs text-white font-medium flex items-center gap-1">
+                  <Maximize2 className="w-3 h-3" /> Detected Strip
                 </div>
               </div>
 
               <div className="relative group">
-                <div className="aspect-square rounded-xl overflow-hidden bg-slate-800/50 border border-slate-700/50">
-                  <img src={state.zoomedRegion!} alt="Zoomed Region" className="w-full h-full object-cover" />
+                <div className="aspect-[4/3] rounded-xl overflow-hidden bg-slate-800/50 border border-slate-700/50">
+                  <img src={state.analyzedArea!} alt="Analyzed Area" className="w-full h-full object-contain" />
                 </div>
-                <div className="absolute top-2 left-2 px-2 py-0.5 bg-black/60 rounded text-[10px] text-white font-medium flex items-center gap-1">
-                  <ZoomIn className="w-2.5 h-2.5" /> Zoomed Region
+                <div className="absolute top-2 left-2 px-3 py-1 bg-black/60 rounded text-xs text-white font-medium flex items-center gap-1">
+                  <Target className="w-3 h-3" /> Analyzed Area
+                </div>
+              </div>
+
+              <div className="relative group">
+                <div className="aspect-[4/3] rounded-xl overflow-hidden bg-slate-800/50 border border-slate-700/50">
+                  <img src={state.zoomedRegion!} alt="Zoomed Region" className="w-full h-full object-contain" />
+                </div>
+                <div className="absolute top-2 left-2 px-3 py-1 bg-black/60 rounded text-xs text-white font-medium flex items-center gap-1">
+                  <ZoomIn className="w-3 h-3" /> Zoomed Region
                 </div>
               </div>
             </div>

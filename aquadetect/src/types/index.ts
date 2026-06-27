@@ -1,3 +1,11 @@
+export interface ExtendedColor {
+  rgb: [number, number, number];
+  hex: string;
+  hsvStd?: string;
+  hsvCv: [number, number, number];
+  description?: string;
+}
+
 export interface CalibrationEntry {
   range: string;
   name: string;
@@ -6,10 +14,19 @@ export interface CalibrationEntry {
   status: string;
   description: string;
   ppmCenter: number;
+  hsv?: {
+    lower: [number, number, number];
+    upper: [number, number, number];
+  };
+  isBleached?: boolean;
+  extendedColors?: {
+    [key: string]: ExtendedColor;
+  };
 }
 
 export interface AnalysisResult {
   waterContent: number;
+  range: string;
   status: string;
   detectedColor: string;
   confidence: number;
@@ -29,4 +46,9 @@ export interface ImageAnalysisState {
   isAnalyzing: boolean;
   analysisComplete: boolean;
   result: AnalysisResult | null;
+}
+
+export interface ImageUploaderProps {
+  onAnalysisComplete: (result: AnalysisResult, images: ImageAnalysisState) => void;
+  onAnalysisStart?: () => void;
 }

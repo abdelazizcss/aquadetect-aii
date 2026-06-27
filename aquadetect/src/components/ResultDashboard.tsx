@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { AlertTriangle, CheckCircle, Info, TrendingUp, Palette, Gauge } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Info, Palette, Gauge } from 'lucide-react';
 import { getStatusColor, getStatusBgColor } from '../utils/calibrationData';
 import type { AnalysisResult } from '../types';
 
@@ -87,7 +87,7 @@ export default function ResultDashboard({ result }: ResultDashboardProps) {
         {/* Water Content */}
         <StatCard
           label="Water Content"
-          value={`${result.waterContent} ppm`}
+          value={result.range || `${result.waterContent} ppm`}
           icon={AlertTriangle}
           color={statusColor}
           delay={0}
@@ -129,32 +129,6 @@ export default function ResultDashboard({ result }: ResultDashboardProps) {
           delay={0.2}
         />
 
-        {/* Confidence */}
-        <StatCard
-          label="Confidence"
-          value={`${result.confidence}%`}
-          icon={TrendingUp}
-          color="#42a5f5"
-          delay={0.3}
-        />
-
-        {/* Risk Level */}
-        <StatCard
-          label="Risk Level"
-          value={result.riskLevel}
-          icon={AlertTriangle}
-          color={statusColor}
-          delay={0.4}
-        />
-
-        {/* Delta-E */}
-        <StatCard
-          label="Delta-E (CIE76)"
-          value={result.deltaE.toFixed(2)}
-          icon={Info}
-          color="#94a3b8"
-          delay={0.5}
-        />
       </div>
     </motion.div>
   );

@@ -31,6 +31,7 @@ export default function CalibrationGraph({ result }: CalibrationGraphProps) {
     ppm: result.waterContent,
     hex: result.hex,
     name: result.detectedColor,
+    range: result.range,
   }] : [];
 
   const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ payload: { name: string; ppm: number; hex: string; range: string; status: string } }> }) => {
@@ -39,8 +40,7 @@ export default function CalibrationGraph({ result }: CalibrationGraphProps) {
       return (
         <div className="glass-card p-3 text-sm border border-slate-700">
           <p className="font-semibold text-white">{data.name}</p>
-          <p className="text-slate-400 font-mono text-xs">{data.ppm} ppm</p>
-          <p className="text-slate-500 text-xs">{data.range}</p>
+          <p className="text-slate-500 text-xs">{data.range || `${data.ppm} ppm`}</p>
           <p className="text-xs mt-1" style={{ color: data.hex }}>{data.status}</p>
         </div>
       );

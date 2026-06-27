@@ -16,6 +16,9 @@ export default function App() {
   const handleAnalysisComplete = useCallback((newResult: AnalysisResult, _newImages: ImageAnalysisState) => {
     setResult(newResult);
   }, []);
+  const handleAnalysisStart = useCallback(() => {
+    setResult(null);
+  }, []);
 
   const statusColor = result ? getStatusColor(result.status) : '#94a3b8';
 
@@ -60,11 +63,12 @@ export default function App() {
                 status={result?.status ?? 'Waiting'}
                 color={statusColor}
                 unit="ppm"
+                range={result?.range}
               />
             </motion.div>
 
             {/* Image Uploader */}
-            <ImageUploader onAnalysisComplete={handleAnalysisComplete} />
+            <ImageUploader onAnalysisComplete={handleAnalysisComplete} onAnalysisStart={handleAnalysisStart} />
           </div>
 
           {/* Result Dashboard */}
@@ -95,7 +99,7 @@ export default function App() {
               AquaDetect™ — Fuel Water Content Analyzer • ISO 6296 Calibration Standard
             </p>
             <p className="text-[10px] text-slate-700 mt-1">
-              Advanced Colorimetric Analysis System • CIELAB Color Science • Delta-E Precision Matching
+              Advanced Colorimetric Analysis System • HSV Primary Classification • RGB Fusion • CIELAB Delta-E Precision
             </p>
           </motion.footer>
         </div>

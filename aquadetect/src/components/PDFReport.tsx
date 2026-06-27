@@ -62,7 +62,7 @@ export default function PDFReport({ result }: PDFReportProps) {
 
       // Result cards
       const results = [
-        { label: 'Water Content', value: `${result.waterContent} ppm` },
+        { label: 'Water Content', value: result.range },
         { label: 'Status', value: result.status.toUpperCase() },
         { label: 'Detected Color', value: result.detectedColor },
         { label: 'Confidence', value: `${result.confidence}%` },

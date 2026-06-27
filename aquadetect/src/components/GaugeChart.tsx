@@ -8,9 +8,10 @@ interface GaugeChartProps {
   status: string;
   color: string;
   unit: string;
+  range?: string;
 }
 
-export default function GaugeChart({ value, maxValue, label, status, color, unit }: GaugeChartProps) {
+export default function GaugeChart({ value, maxValue, label, status, color, unit, range }: GaugeChartProps) {
   const [isAnimating, setIsAnimating] = useState(true);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animatedValue = useSpring(0, { stiffness: 40, damping: 15 });
@@ -191,14 +192,14 @@ export default function GaugeChart({ value, maxValue, label, status, color, unit
         {/* Center Display */}
         <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ paddingTop: '40px' }}>
           <motion.span
-            className="text-4xl sm:text-5xl font-bold font-mono"
+            className="text-3xl sm:text-4xl font-bold font-mono"
             style={{ color }}
           >
             {isAnimating ? (
               <span className="text-slate-500">---</span>
             ) : (
               <motion.span>
-                <motion.span>{displayValue}</motion.span>
+                <motion.span>{range || displayValue}</motion.span>
               </motion.span>
             )}
           </motion.span>
