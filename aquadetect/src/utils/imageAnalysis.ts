@@ -109,7 +109,7 @@ export function detectStripRegion(
   return chosenRegion;
 }
 
-function getGradientX(grayMap: Float32Array, w: number, h: number, x: number, y: number): number {
+function getGradientX(grayMap: Float32Array, w: number, _h: number, x: number, y: number): number {
   if (x <= 0 || x >= w - 1) return 0;
   const left = grayMap[y * w + (x - 1)];
   const right = grayMap[y * w + (x + 1)];
@@ -785,7 +785,7 @@ function getStatusFromPpm(ppm: number): { status: string; riskLevel: string; col
 }
 
 export function generateColorHistogram(
-  canvas: HTMLCanvasElement,
+  _canvas: HTMLCanvasElement,
   ctx: CanvasRenderingContext2D,
   stripRegion: { x: number; y: number; width: number; height: number }
 ): string {
@@ -874,7 +874,7 @@ export function generateColorHistogram(
 }
 
 export function generateEdgeDetection(
-  canvas: HTMLCanvasElement,
+  _canvas: HTMLCanvasElement,
   ctx: CanvasRenderingContext2D,
   stripRegion: { x: number; y: number; width: number; height: number }
 ): string {
@@ -948,7 +948,7 @@ export function generateEdgeDetection(
 }
 
 export function generateHSVChannels(
-  canvas: HTMLCanvasElement,
+  _canvas: HTMLCanvasElement,
   ctx: CanvasRenderingContext2D,
   stripRegion: { x: number; y: number; width: number; height: number }
 ): { h: string; s: string; v: string } {
@@ -1059,7 +1059,7 @@ export function generateHSVChannels(
 }
 
 export function generatePixelClassificationMap(
-  canvas: HTMLCanvasElement,
+  _canvas: HTMLCanvasElement,
   ctx: CanvasRenderingContext2D,
   stripRegion: { x: number; y: number; width: number; height: number }
 ): string {
