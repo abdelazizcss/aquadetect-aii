@@ -62,7 +62,7 @@ export const CALIBRATION_DATA: CalibrationEntry[] = [
   {
     range: '200-250 ppm',
     name: 'Slate Blue / Lavender',
-    hex: '#8486A6',
+    hex: '#6771ff',
     rgb: [132, 134, 166],
     status: 'Safe',
     description: 'Moderate water - Slate blue/Lavender',
@@ -112,7 +112,7 @@ export const CALIBRATION_DATA: CalibrationEntry[] = [
   {
     range: '250-400 ppm',
     name: 'True Violet / Mauve',
-    hex: '#876E94',
+    hex: '#8b66a1',
     rgb: [135, 110, 148],
     status: 'Attention',
     description: 'Elevated water - True violet',
@@ -141,7 +141,7 @@ export const CALIBRATION_DATA: CalibrationEntry[] = [
   {
     range: '400-550 ppm',
     name: 'Magenta/Orchid Violet',
-    hex: '#927099',
+    hex: '#ab78b5',
     rgb: [146, 112, 153],
     status: 'High Contamination',
     description: 'High water - Deep magenta',
@@ -184,7 +184,7 @@ export const CALIBRATION_DATA: CalibrationEntry[] = [
   {
     range: '550-750 ppm',
     name: 'Pale Lavender / Pink',
-    hex: '#E1C8CD',
+    hex: '#de8093',
     rgb: [225, 200, 205],
     status: 'Critical',
     description: 'Very high water - Bleaching effect',
@@ -220,8 +220,8 @@ export const CALIBRATION_DATA: CalibrationEntry[] = [
   {
     range: '>750 ppm',
     name: 'Stable Light Pink / Totally Bleached',
-    hex: '#F2EBEF',
-    rgb: [242, 235, 238],
+    hex: '#eba2b8',
+    rgb: [242, 190, 205],
     status: 'Critical',
     description: 'Critical - Stable light pink bleaching phase',
     ppmCenter: 875,
@@ -232,22 +232,22 @@ export const CALIBRATION_DATA: CalibrationEntry[] = [
     isBleached: true,
     extendedColors: {
       '20260621_221537.jpg': {
-        rgb: [242, 235, 238],
-        hex: '#F2EBEF',
+        rgb: [242, 190, 205],
+        hex: '#F2BECD',
         hsvStd: 'H: 334°, S: 3%, V: 95%',
         hsvCv: [167, 8, 242],
         description: 'Bleached center core',
       },
       '20260621_222027.jpg': {
-        rgb: [242, 235, 238],
-        hex: '#F2EBEF',
+        rgb: [242, 190, 205],
+        hex: '#F2BECD',
         hsvStd: 'H: 334°, S: 3%, V: 95%',
         hsvCv: [167, 8, 242],
         description: 'Bleached center core (repeat set)',
       },
       '20260621_222043.jpeg': {
-        rgb: [242, 235, 238],
-        hex: '#F2EBEF',
+        rgb: [242, 190, 205],
+        hex: '#F2BECD',
         hsvStd: 'H: 334°, S: 3%, V: 95%',
         hsvCv: [167, 8, 242],
         description: 'Bleached center core (repeat set)',
@@ -276,7 +276,7 @@ export const getStatusColor = (status: string): string => {
     case 'Safe': return '#8486A6';
     case 'Attention': return '#876E94';
     case 'High Contamination': return '#927099';
-    case 'Critical': return '#E1C8CD';
+    case 'Critical': return '#f4a4ba';
     default: return '#94a3b8';
   }
 };
@@ -287,7 +287,7 @@ export const getStatusBgColor = (status: string): string => {
     case 'Safe': return 'rgba(132, 134, 166, 0.15)';
     case 'Attention': return 'rgba(135, 110, 148, 0.15)';
     case 'High Contamination': return 'rgba(146, 112, 153, 0.15)';
-    case 'Critical': return 'rgba(225, 200, 205, 0.15)';
+    case 'Critical': return 'rgba(242, 190, 205, 0.15)';
     default: return 'rgba(148, 163, 184, 0.15)';
   }
 };
@@ -298,7 +298,8 @@ export const getStatusGlow = (status: string): string => {
     case 'Safe': return '0 0 20px rgba(132, 134, 166, 0.4)';
     case 'Attention': return '0 0 20px rgba(135, 110, 148, 0.4)';
     case 'High Contamination': return '0 0 20px rgba(146, 112, 153, 0.4)';
-    case 'Critical': return '0 0 20px rgba(225, 200, 205, 0.4)';
+    case 'Critical': return '0 0 20px rgba(242, 190, 205, 0.4)';
     default: return 'none';
   }
 };
+
